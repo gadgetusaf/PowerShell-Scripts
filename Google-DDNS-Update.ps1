@@ -1,6 +1,6 @@
 ﻿################################
 #                              #
-#   DDNS Updater v2.5 public   #
+#   DDNS Updater v2.6 public   #
 # For use with  Google Domains #
 #                              #
 ################################
@@ -70,33 +70,21 @@ param (
     Force = Force an update
     #> 
         )
-function Send-EmailUpdate {
-# This will be moved into a powershell module soon
-    $SMTPServer = "smtp.gmail.com"
-    $SMTPClient = New-Object Net.Mail.SmtpClient($SmtpServer, 587)
-    $SMTPClient.EnableSsl = $true
-    $SMTPClient.Credentials = New-Object System.Net.NetworkCredential("gmail-email", "app password");
-    $EmailFrom = "email"
-    $EmailTo = "email"
-    $Subject = "WAN IP Change"
-    $Body = "New WAN IP address found starting update. Old IP $GoogleIP  New IP $wanIP"
-    $SMTPClient.Send( $EmailFrom, $EmailTo, $Subject, $Body )
-}
+$subject = "WANT IP Change"
 $DomainChecked = "Monotor Domain"
 $rootdrive = "D:\"
 $credfolder =  "creds\"
 $dnsfolder = "ip\"
 $FileName = "update.list.csv"
+$SMTPserver = "smtp.gmail.com"
+$Port = "587"
+$from = "service-email"
+$to = "your email"
+
 # do no change nex 3 lines building folder paths.
 $credpath = $rootdrive + $credfolder
 $dnspath = $rootdrive + $dnsfolder
 $DNSList = $dnspath + $FileName
-if ((Test-Path  $credpath) -eq $false) { 
-    New-Item -Path "$rootdrive" -ItemType directory -Name $credfolder
-    }
-if ((Test-Path $dnspath) -eq $false) {
-    New-Item -Path $rootdrive -Type directory -Name $dnsfolder
-    }
 # This is a rebuild section.
 if ((Test-Path $DNSList ) -eq $false -and (Test-Path -Path "$credpath$DomainChecked.xml") -eq $true) {
     Write-Host "Configuration file not found,"
@@ -105,10 +93,8 @@ if ((Test-Path $DNSList ) -eq $false -and (Test-Path -Path "$credpath$DomainChec
         } until ( $recover -eq "y" -or $recover -eq "n" -or $recover -eq "Y" -or $recover -eq "N" )
         #Starting rebuild if y skipping if not
     if ( $recover -eq "y" -or $recover -eq "Y" ) {
-         #$OutCSV = @() #Array for rebuild
          "Domain,Sub,Creds" | Out-File -FilePath $DNSList
         Get-ChildItem -Path $credpath -Filter *.xml | ForEach-Object {
-            #$out = @()
             $hostname = $_.Name.TrimEnd("xml")
             $Hostn = $hostname.TrimEnd('.')
             $Sub,$Domain = $hostn.Split(".",2)
@@ -139,6 +125,16 @@ if ((Test-Path $DNSList ) -eq $false -and (Test-Path -Path "$credpath$DomainChec
         } until ($Prompt -eq "no" -or $Prompt -eq "NO" -or $Prompt -eq "n" -or $Prompt -eq "N")
         Write-Host "setup complete"
     }
+#checking for store email creds
+if ((Test-Path ($dnspath + "smtp.xml")) -eq $false -or $Prompt -eq "Ecreds") {
+    Write-Host " you need to provide your email username and app password. this is not the same as the password you log in with" 
+    Get-Credential | Export-CliXml  -Path ($dnspath + "smtp.xml") 
+    }
+if ($Prompt -eq "testmail" ) {
+    $Credential = Import-CliXml -Path ($dnspath + "smtp.xml")
+    Write-Host $Credential.UserName $Credential.Password
+    Send-EmailUpdate -Credential ($Credential) -Server $SMTPserver -port $Port -from $from -to $to -subject "$subject" -body "$body"
+    }
 
 if ($Prompt -eq "add") {
     do {
@@ -151,12 +147,13 @@ if ($Prompt -eq "add") {
         $Prompt = Read-Host -Prompt "Add another host? [y/n]"
         } until ($Prompt -eq "no" -or $Prompt -eq "NO" -or $Prompt -eq "n" -or $Prompt -eq "N")
         }
-# Start of update chek
+# Start of update check
 $DNS_IP = (Resolve-DnsName $DomainChecked -Type A -Server 8.8.8.8)
 $DNSip = $DNS_IP.IPAddress
 $wanIPm = (Invoke-RestMethod http://ipinfo.io/)
 $wanIP = $wanIPm.ip
 write-host "Current DDNs IP is $DNSip WAN IP is $wanIP" 
+$body = "Current DDNs IP is $DNSip WAN IP is $wanIP"
 if ($wanIP -eq $DNSip -and $Prompt -ne "Force"){
     write-host "no update"
     } else { 
@@ -166,5 +163,5 @@ if ($wanIP -eq $DNSip -and $Prompt -ne "Force"){
         $Creds = Import-CliXml -Path $_.Creds
         Update-GoogleDynamicDNS -Credential $Creds -domainName $_.Domain -subdomainName $_.Sub
         }
-    Send-EmailUpdate 
-}
+
+    Send-EmailUpdate $credpath $SMTPserver $Port $from $to $subject $body
