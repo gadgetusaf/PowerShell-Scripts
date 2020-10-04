@@ -4,7 +4,7 @@
 ### Restarts loop.
 ### IP address to monitor
 ### requires the Send-EmailUpdate module
-$IPAddress = "IP of thnnel router"
+$IPAddress = "10.0.1.231"
 $credpath = "D:\ip\smtp.xml"
 $To = "Who to alert"
 $from = "service account"
@@ -14,7 +14,7 @@ if (Test-Path $credpath -eq $false ) {
      Get-Credential | Export-CliXml  -Path ("$credpath")
      }
 ## Starting Script
-$subject = "VPN Tunnel Alert Scipt Start"
+$subject = "Host Unreachable Alarm Scipt Startting"
 $body = "Starting Script"
 $Credential = Import-CliXml -Path ("$credpath")
 Send-EmailUpdate -credential $Credential -Server smtp.gmail.com -port 587 -from $from -to $to -subject $subject -body "$body"
@@ -41,8 +41,8 @@ Do {
     Until (($PingComputer1 -eq $false) -and ($PingComputer2 -eq $false))
 
     # Send email notification that connection has been lost
-       $Subject = "VPN DOWN ALERT"
-       $Body = "The VPN HAS Failed"
+       $Subject = "Host Unreachable ALERT"
+       $Body = "Host is unreachable Failed to reach $IPAddress"
        Send-EmailUpdate -credential $Credential -Server smtp.gmail.com -port 587 -from $from -to $to -subject $subject -body "$body"
 
 
@@ -60,8 +60,8 @@ Do {
     Until (($PingComputer1 -eq $true) -and ($PingComputer2 -eq $true))
 
     # Send email notification that connection is back online
-       $Subject = "VPN RESTORED"
-       $Body = "VPN has been restored"
+       $Subject = "Connection RESTORED"
+       $Body = "restored"
        Send-EmailUpdate -credential $Credential -Server smtp.gmail.com -port 587 -from $from -to $to -subject $subject -body "$body"
 
 }
