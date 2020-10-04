@@ -130,12 +130,15 @@ if ((Test-Path ($dnspath + "smtp.xml")) -eq $false -or $Prompt -eq "Ecreds") {
     Write-Host " you need to provide your email username and app password. this is not the same as the password you log in with" 
     Get-Credential | Export-CliXml  -Path ($dnspath + "smtp.xml") 
     }
+#test sending an email
 if ($Prompt -eq "testmail" ) {
     $Credential = Import-CliXml -Path ($dnspath + "smtp.xml")
     Write-Host $Credential.UserName $Credential.Password
+    $subject = "Test email"
+    $body = "This is a test email."
     Send-EmailUpdate -Credential ($Credential) -Server $SMTPserver -port $Port -from $from -to $to -subject "$subject" -body "$body"
+    exit
     }
-
 if ($Prompt -eq "add") {
     do {
         $Domain = (Read-Host -Prompt 'Domain:')
