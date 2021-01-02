@@ -1,3 +1,49 @@
+<#
+.SYNOPSIS
+    This script will update Google DDNS using powershell
+    
+    You Must preinstall the powershell module GoogleDynamicDNSTools Please Note this command must be run with admin using the command below. if you can not run as admin you can download the source from the link below. 
+    
+    Install-Module -Name GoogleDynamicDNSTools
+    https://github.com/drewfurgiuele/GoogleDynamicDNSTools/blob/master/Functions/Update-GoogleDynamicDNS.ps1
+    
+    Also you will need the Send-EmailUpdate function in my Github
+    https://github.com/gadgetusaf/PowerShellTools/blob/master/modules/Send-EmailUpdate/Send-EmailUpdate.psm1
+         
+.DESCRIPTION
+    This script will build a list of hostnames to update when your WAN IP differs from the IP Google DNS has for a domain you monitor. 
+    
+    On first run this script will create a list of hostnames to monitor along with an email address to send a notice to. 
+    
+    If you are planning on running this script as a scheduled task, you MUST select RUNAS and run as the same user that created the credentials . This is a requirement for powershell saved credentials. 
+
+    You Must preinstall the powershell module GoogleDynamicDNSTools Please Note this command must be run with admin using the command below. if you can not run as admin you can download the source from the link below. 
+    
+    Install-Module -Name GoogleDynamicDNSTools
+    https://github.com/drewfurgiuele/GoogleDynamicDNSTools/blob/master/Functions/Update-GoogleDynamicDNS.ps1
+    
+    Also you will need the Send-EmailUpdate function in my Github
+    https://github.com/gadgetusaf/PowerShellTools/blob/master/modules/Send-EmailUpdate/Send-EmailUpdate.psm1
+    
+.PARAMETER $Prompt
+
+    Prompt allows you to call the script into different modes.
+
+    prompt can be set to:
+    add       = add a host to the update list
+    force     = Force an update
+    testmail  = test send an email
+    email     = reset email creds
+
+
+.EXAMPLE
+    Google-DDNS-Update.ps1
+        Used to run silently or on first run to add and create a hostname list.
+    Google-DDNS-Update.ps1 add
+        Add a domain in to the list
+    Google-DDNS-Update.ps1 force
+        Note Force is case sensitive 
+#>
 param (
     [Parameter(Mandatory=$false)]
     $Prompt
